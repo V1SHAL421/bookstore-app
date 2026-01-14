@@ -34,3 +34,7 @@ db-reset:
     @sleep 5
     docker compose up -d api
     @echo "Database reset complete!"
+
+# Seed database with sample data
+seed:
+    docker compose exec api python scripts/seed.py

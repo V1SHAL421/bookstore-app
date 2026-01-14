@@ -1,6 +1,6 @@
 import jwt
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from src.db.models import DBUser
 from uuid import UUID
@@ -41,9 +41,18 @@ async def login(response: Response, user: DBUser = Depends(authenticate_user_log
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh(refresh_input: RefreshTokenInput, user_service: UserService = Depends(get_user_service)):
+async def refresh(
+    request: Request,
+    refresh_input: RefreshTokenInput | None = None,
+    user_service: UserService = Depends(get_user_service),
+):
+    refresh_token = refresh_input.refresh_token if refresh_input else None
+    if not refresh_token:
+        refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Refresh token missing")
     try:
-        payload = jwt.decode(refresh_input.refresh_token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
+        payload = jwt.decode(refresh_token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
         user_id: str = payload.get("sub")
         token_type: str = payload.get("type")
         if user_id is None or token_type != "refresh":
@@ -54,7 +63,7 @@ async def refresh(refresh_input: RefreshTokenInput, user_service: UserService = 
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
     stored_refresh = await redis_client.get(f"refresh:{user_id}")
-    if not stored_refresh or stored_refresh != refresh_input.refresh_token:
+    if not stored_refresh or stored_refresh != refresh_token:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
     user = await user_service.retrieve(user_id=UUID(user_id))

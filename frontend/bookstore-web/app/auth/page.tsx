@@ -65,7 +65,7 @@ export default function AuthPage() {
         try {
             const tokenResponse = await postJSON<TokenResponse, LoginInput>("/users/login", data);
             setAccessToken(tokenResponse.access_token);
-            router.push("/dashboard");
+            router.push("/home");
         } catch (err) {
             console.error("Login error:", err);
             setGlobalError("Something went wrong. Please try again.");
