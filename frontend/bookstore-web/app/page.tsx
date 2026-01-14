@@ -7,12 +7,16 @@ import React from "react"
 import { AnimatedTestimonials } from "@/components/ui/animated-testimonials";
 import { AnimatedText } from "@/components/ui/animated-text";
 import { Button } from "@/components/ui/stateful-button"
+import { useRouter } from "next/navigation";
 
 
 export default function Home() {
+  const router = useRouter()
+
   const handleClick = () => {
     return new Promise((resolve) => {
-      setTimeout(resolve, 4000);
+      setTimeout(resolve, 3000);
+      router.push('/auth');
     });
   };
   const testimonials = [
@@ -55,10 +59,10 @@ export default function Home() {
   return (
     <>
       <AnimatedText text="Bookdex" />
-    <AnimatedTestimonials testimonials={testimonials} />
-    <div className="flex h-40 w-full items-center justify-center">
-      <Button onClick={handleClick}>Get Started</Button>
-    </div>
+      <AnimatedTestimonials testimonials={testimonials} />
+      <div className="flex h-40 w-full items-center justify-center">
+        <Button onClick={handleClick}>Get Started</Button>
+      </div>
     </>
     
   );
