@@ -1,6 +1,6 @@
 import jwt
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from src.db.models import DBUser
 from uuid import UUID
@@ -20,13 +20,22 @@ async def signup(user_input: UserSignUpInput, user_service: UserService = Depend
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(user: DBUser = Depends(authenticate_user_login)):
+async def login(response: Response, user: DBUser = Depends(authenticate_user_login)):
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
     await redis_client.set(
         f"refresh:{user.id}",
         refresh_token,
         ex=settings.JWT_REFRESH_TOKEN_EXPIRE_MINUTES * 60,
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=settings.ENVIRONMENT != "LOCAL",
+        samesite="lax",
+        max_age=settings.JWT_REFRESH_TOKEN_EXPIRE_MINUTES * 60,
+        path="/",
     )
     return TokenResponse(access_token=access_token, refresh_token=refresh_token, user=UserOutput(**user.model_dump()))
 
