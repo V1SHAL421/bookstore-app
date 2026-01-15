@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useCart } from "@/app/CartContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckoutDialog } from "./CheckoutDialog";
 
 export function CartSidebar() {
   const { items, removeItem, updateQuantity, total } = useCart();
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   return (
     <div className="w-80 h-full bg-background border-l border-border p-4 overflow-y-auto">
@@ -57,12 +60,23 @@ export function CartSidebar() {
                   <span>Total:</span>
                   <span>${total.toFixed(2)}</span>
                 </div>
-                <Button className="w-full mt-2">Checkout</Button>
+                <Button
+                  className="w-full mt-2"
+                  onClick={() => setCheckoutOpen(true)}
+                  disabled={items.length === 0}
+                >
+                  Checkout
+                </Button>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
+      <CheckoutDialog
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        total={total}
+      />
     </div>
   );
 }
