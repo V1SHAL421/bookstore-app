@@ -11,3 +11,13 @@ export const loginSchema = z.object({
     email: z.string().min(1, "Email is required"),
     password: z.string().min(1, "Password is required"),
 })
+
+export const bookSchema = z.object({
+    id: z.string(),
+    title: z.string(),
+    author_id: z.string(),
+    author_name: z.string(),
+    description: z.string().nullable(),
+    price: z.number(),
+    published_date: z.string().nullable(),
+})

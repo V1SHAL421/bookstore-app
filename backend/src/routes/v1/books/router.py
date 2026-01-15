@@ -16,7 +16,8 @@ async def create_book(
     current_user: DBUser = Depends(authenticate_user),
 ):
     book = await book_service.create(data=book_input)
-    return BookOutput(**book.model_dump())
+    book_with_author = await book_service.retrieve_with_author(book_id=book.id)
+    return BookOutput(**book_with_author)
 
 
 @router.get("", response_model=list[BookOutput])
@@ -25,7 +26,7 @@ async def list_books(
     current_user: DBUser = Depends(authenticate_user),
 ):
     books = await book_service.list()
-    return [BookOutput(**book.model_dump()) for book in books]
+    return [BookOutput(**book) for book in books]
 
 
 @router.get("/{book_id}", response_model=BookOutput)
@@ -34,8 +35,8 @@ async def get_book(
     book_service: BookService = Depends(get_book_service),
     current_user: DBUser = Depends(authenticate_user),
 ):
-    book = await book_service.retrieve(book_id=book_id)
-    return BookOutput(**book.model_dump())
+    book = await book_service.retrieve_with_author(book_id=book_id)
+    return BookOutput(**book)
 
 
 @router.patch("/{book_id}", response_model=BookOutput)
@@ -46,7 +47,8 @@ async def update_book(
     current_user: DBUser = Depends(authenticate_user),
 ):
     book = await book_service.update(book_id=book_id, data=update_input)
-    return BookOutput(**book.model_dump())
+    book_with_author = await book_service.retrieve_with_author(book_id=book.id)
+    return BookOutput(**book_with_author)
 
 
 @router.delete("/{book_id}", status_code=204)

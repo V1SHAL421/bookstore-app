@@ -31,7 +31,13 @@ class BookService:
         except NoResultFound as exc:
             raise BookNotFound from exc
 
-    async def list(self) -> list[DBBook]:
+    async def retrieve_with_author(self, book_id: uuid.UUID) -> dict:
+        try:
+            return await self.repository.retrieve_with_author(book_id=book_id)
+        except NoResultFound as exc:
+            raise BookNotFound from exc
+
+    async def list(self) -> list[dict]:
         return await self.repository.list()
 
     async def update(self, book_id: uuid.UUID, data: BookUpdateInput) -> DBBook:

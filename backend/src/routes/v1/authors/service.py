@@ -25,7 +25,7 @@ class AuthorService:
     async def create(self, data: AuthorCreateInput) -> DBAuthor:
         return await self.repository.create(data=data)
 
-    async def retrieve(self, author_id: uuid.UUID) -> DBAuthor:
+    async def retrieve(self, author_id: uuid.UUID) -> dict:
         try:
             return await self.repository.retrieve(author_id=author_id)
         except NoResultFound as exc:

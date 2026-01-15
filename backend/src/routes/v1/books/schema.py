@@ -24,6 +24,7 @@ class BookOutput(BaseModel):
     id: UUID
     title: str
     author_id: UUID
+    author_name: str
     description: str | None
     price: float
     published_date: datetime | None

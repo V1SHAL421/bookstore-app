@@ -35,7 +35,7 @@ async def get_author(
     current_user: DBUser = Depends(authenticate_user),
 ):
     author = await author_service.retrieve(author_id=author_id)
-    return AuthorOutput(**author.model_dump())
+    return AuthorOutput(**author)
 
 
 @router.patch("/{author_id}", response_model=AuthorOutput)

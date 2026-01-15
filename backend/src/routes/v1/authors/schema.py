@@ -17,3 +17,4 @@ class AuthorOutput(BaseModel):
     id: UUID
     name: str
     bio: str | None
+    books: list[dict]  # list of book dicts

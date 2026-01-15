@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getJSON } from "@/app/utils";
+import { bookSchema } from "@/app/schema";
 import { Input } from "@/components/ui/input";
 import {
     Table,
@@ -32,14 +34,7 @@ export default function HomePage() {
     //     };
     // };
 
-    type BookResponse = {
-        id: string;
-        title: string;
-        author_id: string;
-        description: string;
-        price: number;
-        published_date: string | null;
-    };
+    type BookResponse = ReturnType<typeof bookSchema.parse>;
 
     const [books, setBooks] = useState<BookResponse[]>([]);
     const [error, setError] = useState<string | null>(null);
@@ -52,7 +47,8 @@ export default function HomePage() {
             const matchesSearch =
                 normalizedSearch.length === 0 ||
                 book.title.toLowerCase().includes(normalizedSearch) ||
-                (book.description?.toLowerCase().includes(normalizedSearch) ?? false);
+                (book.description?.toLowerCase().includes(normalizedSearch) ?? false) ||
+                book.author_name.toLowerCase().includes(normalizedSearch);
             const matchesPrice = maxPrice == null || book.price <= maxPrice;
             return matchesSearch && matchesPrice;
         });
@@ -62,15 +58,29 @@ export default function HomePage() {
         {
           accessorKey: "title",
           header: "Title",
+          cell: ({ getValue, row }) => (
+            <Link href={`/book/${row.original.id}`} className="text-blue-600 hover:underline">
+              {getValue<string>()}
+            </Link>
+          ),
         },
         {
           accessorKey: "description",
           header: "Description",
         },
         {
+          accessorKey: "author_name",
+          header: "Author",
+          cell: ({ getValue, row }) => (
+            <Link href={`/author/${row.original.author_id}`} className="text-blue-600 hover:underline">
+              {getValue<string>()}
+            </Link>
+          ),
+        },
+        {
           accessorKey: "price",
           header: "Price",
-          cell: ({ getValue }) => `$${getValue<number>().toFixed(2)}`,
+          cell: ({ getValue }) => `${getValue<number>().toFixed(2)}`,
         },
         {
           accessorKey: "published_date",
@@ -124,7 +134,7 @@ export default function HomePage() {
                     </label>
                     <Input
                         id="book-search"
-                        placeholder="Search by title or description"
+                        placeholder="Search by title, description, or author"
                         value={searchTerm}
                         onChange={(event) => setSearchTerm(event.target.value)}
                     />
