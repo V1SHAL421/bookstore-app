@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     JWT_REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
+    # CORS
+    CORS_ALLOW_ORIGINS: list[str] = ["http://localhost:3000"]
+
+
     @computed_field
     @property
     def DATABASE_URL(self) -> str:

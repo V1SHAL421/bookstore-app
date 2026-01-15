@@ -33,7 +33,7 @@ def create_access_token(user_id: UUID, role: str) -> str:
 
 def create_refresh_token(user_id: UUID, role: str) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.JWT_REFRESH_TOKEN_EXPIRE_MINUTES)
-    to_encode = {"sub": str(user_id), "role": role, "exp": expire, "type": "refresh"}
+    to_encode = {"sub": str(user_id), "role": role, "exp": expire, "type": "refresh", "jti": secrets.token_urlsafe(16)}
     encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm="HS256")
     return encoded_jwt
 

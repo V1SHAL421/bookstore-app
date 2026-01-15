@@ -68,6 +68,21 @@ async def test_signup_invalid_password(client: AsyncClient):
 
 
 @pytest.mark.asyncio(loop_scope="function")
+async def test_signup_admin_blocked_by_default(client: AsyncClient):
+    signup_data = {
+        "email": f"admin_{uuid.uuid4()}@example.com",
+        "full_name": "Bootstrap Admin",
+        "password": "password123",
+    }
+
+    response = await client.post("/api/v1/users/signup", json=signup_data)
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["role"] == "user"
+
+
+@pytest.mark.asyncio(loop_scope="function")
 async def test_login_success(client: AsyncClient, test_user: DBUser):
     login_data = {
         "email": test_user.email,

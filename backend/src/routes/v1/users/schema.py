@@ -13,8 +13,7 @@ class UserSignUpInput(BaseModel):
 
     @model_validator(mode="after")
     def set_role(self):
-        if self.role is None:
-            self.role = "admin" if "admin" in self.email.lower() else "user"
+        self.role = "user"
         return self
 
     @model_validator(mode="after")
