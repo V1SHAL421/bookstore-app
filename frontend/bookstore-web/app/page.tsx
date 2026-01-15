@@ -1,8 +1,5 @@
 "use client"
 
-import Image from "next/image";
-import React from "react"
-
 import { AnimatedTestimonials } from "@/components/ui/animated-testimonials";
 import { AnimatedText } from "@/components/ui/animated-text";
 import { Button } from "@/components/ui/stateful-button"

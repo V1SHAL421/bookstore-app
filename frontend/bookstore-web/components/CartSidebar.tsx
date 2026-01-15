@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckoutDialog } from "./CheckoutDialog";
 
 export function CartSidebar() {
-  const { items, removeItem, updateQuantity, total } = useCart();
+  const { items, updateQuantity, total } = useCart();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   return (

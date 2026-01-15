@@ -11,7 +11,6 @@ import { useCart } from "@/app/CartContext";
 import {
     Table,
     TableBody,
-    TableCaption,
     TableCell,
     TableHead,
     TableHeader,

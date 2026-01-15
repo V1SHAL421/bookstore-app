@@ -1,7 +1,7 @@
 import jwt
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPAuthorizationCredentials
 from src.db.models import DBUser
 from uuid import UUID
 from src.routes.v1.users.schema import RefreshTokenInput, TokenResponse, UserOutput, UserSignUpInput, UserUpdateInput
