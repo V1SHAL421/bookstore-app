@@ -83,14 +83,14 @@ export default function BookDetailPage() {
     }
 
     return (
-        <div>
+        <div className="p-4">
             <BookHeader book={book} />
-            <Card>
+            <Card className="container">
                 <CardHeader>
                     <CardTitle>Details</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 @md:grid-cols-2 gap-4">
                         <div>
                             <strong>Price:</strong> ${book.price.toFixed(2)}
                         </div>

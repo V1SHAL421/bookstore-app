@@ -11,7 +11,7 @@ export function CartSidebar() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   return (
-    <div className="w-80 h-full bg-background border-l border-border p-4 overflow-y-auto">
+    <div className="w-64 md:w-80 h-full bg-background border-l border-border p-4 overflow-y-auto container">
       <Card>
         <CardHeader>
           <CardTitle>Shopping Cart</CardTitle>

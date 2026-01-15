@@ -25,17 +25,6 @@ import {
 export default function HomePage() {
     const router = useRouter();
 
-    // type TokenResponse = {
-    //     access_token: string;
-    //     refresh_token: string;
-    //     token_type: "bearer";
-    //     user: {
-    //         id: string;
-    //         email: string;
-    //         full_name: string;
-    //     };
-    // };
-
     type BookResponse = ReturnType<typeof bookSchema.parse>;
 
     const [books, setBooks] = useState<BookResponse[]>([]);
@@ -134,7 +123,7 @@ export default function HomePage() {
     }, []);
 
     return (
-        <div>
+        <div className="p-4">
             {error ? <p>{error}</p> : null}
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end">
                 <div className="flex-1">

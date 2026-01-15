@@ -131,7 +131,7 @@ export default function AuthorDetailPage() {
     }
 
     return (
-        <div>
+        <div className="p-4">
             <AuthorHeader author={author} />
             <Table>
                 <TableCaption>Books by {author.name}</TableCaption>
