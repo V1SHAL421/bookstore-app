@@ -2,6 +2,7 @@
 
 import uuid
 from uuid import UUID
+from unittest.mock import AsyncMock
 
 import pytest
 from httpx import AsyncClient
@@ -242,3 +243,58 @@ async def test_delete_me_unauthorized(client: AsyncClient):
     response = await client.delete("/api/v1/users/me")
 
     assert response.status_code == 403
+
+
+
+
+
+@pytest.mark.asyncio(loop_scope="function")
+async def test_logout_success(client: AsyncClient, test_user: DBUser):
+    # First login to get access token
+    login_data = {
+        "email": test_user.email,
+        "password": "testpassword123",
+    }
+
+    login_response = await client.post("/api/v1/users/login", json=login_data)
+    assert login_response.status_code == 200
+    login_data_resp = login_response.json()
+    access_token = login_data_resp["access_token"]
+
+    # Now logout with the token
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = await client.post("/api/v1/users/logout", headers=headers)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["message"] == "Logged out"
+
+
+@pytest.mark.asyncio(loop_scope="function")
+async def test_logout_success(client: AsyncClient, test_user: DBUser, monkeypatch):
+    from src.utils.redis import redis_client
+
+    # Mock redis methods
+    mock_set = AsyncMock()
+    mock_get = AsyncMock(return_value=None)
+    monkeypatch.setattr(redis_client, 'set', mock_set)
+    monkeypatch.setattr(redis_client, 'get', mock_get)
+
+    # Create a dummy access token for the test
+    from src.utils.auth import create_access_token
+    access_token = create_access_token(test_user.id, test_user.role)
+
+    # Now logout with the token
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = await client.post("/api/v1/users/logout", headers=headers)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["message"] == "Logged out"
+
+
+@pytest.mark.asyncio(loop_scope="function")
+async def test_logout_no_token(client: AsyncClient):
+    response = await client.post("/api/v1/users/logout")
+
+    assert response.status_code == 403  # Forbidden, missing token

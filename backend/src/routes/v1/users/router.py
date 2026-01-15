@@ -21,8 +21,8 @@ async def signup(user_input: UserSignUpInput, user_service: UserService = Depend
 
 @router.post("/login", response_model=TokenResponse)
 async def login(response: Response, user: DBUser = Depends(authenticate_user_login)):
-    access_token = create_access_token(user.id)
-    refresh_token = create_refresh_token(user.id)
+    access_token = create_access_token(user.id, user.role)
+    refresh_token = create_refresh_token(user.id, user.role)
     await redis_client.set(
         f"refresh:{user.id}",
         refresh_token,
@@ -70,8 +70,8 @@ async def refresh(
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="User inactive")
 
-    new_access_token = create_access_token(user.id)
-    new_refresh_token = create_refresh_token(user.id)
+    new_access_token = create_access_token(user.id, user.role)
+    new_refresh_token = create_refresh_token(user.id, user.role)
     await redis_client.set(
         f"refresh:{user.id}",
         new_refresh_token,

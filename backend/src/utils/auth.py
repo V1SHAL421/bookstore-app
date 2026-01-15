@@ -24,16 +24,16 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
 
-def create_access_token(user_id: UUID) -> str:
+def create_access_token(user_id: UUID, role: str) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode = {"sub": str(user_id), "exp": expire, "type": "access"}
+    to_encode = {"sub": str(user_id), "role": role, "exp": expire, "type": "access"}
     encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm="HS256")
     return encoded_jwt
 
 
-def create_refresh_token(user_id: UUID) -> str:
+def create_refresh_token(user_id: UUID, role: str) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.JWT_REFRESH_TOKEN_EXPIRE_MINUTES)
-    to_encode = {"sub": str(user_id), "exp": expire, "type": "refresh"}
+    to_encode = {"sub": str(user_id), "role": role, "exp": expire, "type": "refresh"}
     encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm="HS256")
     return encoded_jwt
 
@@ -83,4 +83,14 @@ async def authenticate_user_login(login_input: UserLoginInput, db_session: Async
     if not user.is_active:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
+    return user
+
+
+async def authenticate_admin(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    user = await authenticate_user(credentials, db_session)
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
     return user

@@ -25,8 +25,8 @@ async def test_create_author_success(authenticated_client: AsyncClient, author_s
 
     # Verify author was created in database
     created_author = await author_service.retrieve(author_id=UUID(data["id"]))
-    assert created_author.name == author_data["name"]
-    assert created_author.bio == author_data["bio"]
+    assert created_author["name"] == author_data["name"]
+    assert created_author["bio"] == author_data["bio"]
 
 
 @pytest.mark.asyncio(loop_scope="function")
@@ -135,7 +135,7 @@ async def test_update_author_name(authenticated_client: AsyncClient, author_serv
 
     # Verify name was updated in database
     updated_author = await author_service.retrieve(author_id=UUID(created_author["id"]))
-    assert updated_author.name == "Updated Name"
+    assert updated_author["name"] == "Updated Name"
 
 
 @pytest.mark.asyncio(loop_scope="function")
@@ -159,7 +159,7 @@ async def test_update_author_bio(authenticated_client: AsyncClient, author_servi
 
     # Verify bio was updated in database
     updated_author = await author_service.retrieve(author_id=UUID(created_author["id"]))
-    assert updated_author.bio == "New bio"
+    assert updated_author["bio"] == "New bio"
 
 
 @pytest.mark.asyncio(loop_scope="function")

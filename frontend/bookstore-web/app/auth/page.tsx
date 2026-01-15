@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { postJSON, setAccessToken } from "@/app/utils";
+import { postJSON, setAccessToken, setUser } from "@/app/utils";
 
 export default function AuthPage() {
     const router = useRouter();
@@ -25,6 +25,7 @@ export default function AuthPage() {
             id: string;
             email: string;
             full_name: string;
+            role: string;
         };
     };
     type SignupInput = z.infer<typeof signupSchema>;
@@ -65,7 +66,12 @@ export default function AuthPage() {
         try {
             const tokenResponse = await postJSON<TokenResponse, LoginInput>("/users/login", data);
             setAccessToken(tokenResponse.access_token);
-            router.push("/home");
+            setUser(tokenResponse.user);
+            if (tokenResponse.user.role === 'admin') {
+                router.push("/admin");
+            } else {
+                router.push("/home");
+            }
         } catch (err) {
             console.error("Login error:", err);
             setGlobalError("Something went wrong. Please try again.");

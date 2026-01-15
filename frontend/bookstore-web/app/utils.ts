@@ -1,8 +1,32 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8080/api/v1";
 let accessToken: string | null = null;
+let user: { id: string; email: string; full_name: string; role: string } | null = null;
 
 export function setAccessToken(token: string | null) {
   accessToken = token;
+}
+
+export function setUser(userData: { id: string; email: string; full_name: string; role: string } | null) {
+  user = userData;
+  if (typeof window !== 'undefined') {
+    if (userData) {
+      localStorage.setItem('user', JSON.stringify(userData));
+    } else {
+      localStorage.removeItem('user');
+    }
+  }
+}
+
+export function getUser() {
+  if (user) return user;
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('user');
+    if (stored) {
+      user = JSON.parse(stored);
+      return user;
+    }
+  }
+  return null;
 }
 
 export async function apiFetch(endpoint: string, options?: RequestInit): Promise<Response> {

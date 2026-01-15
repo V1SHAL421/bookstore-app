@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { getJSON } from "@/app/utils";
+import { getJSON, getUser } from "@/app/utils";
 import { bookSchema } from "@/app/schema";
 import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
 import {
     Table,
     TableBody,
@@ -22,6 +23,7 @@ import {
 } from "@tanstack/react-table";
 
 export default function HomePage() {
+    const router = useRouter();
 
     // type TokenResponse = {
     //     access_token: string;
@@ -40,6 +42,13 @@ export default function HomePage() {
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [maxPrice, setMaxPrice] = useState<number | null>(null);
+
+    useEffect(() => {
+        const user = getUser();
+        if (user?.role === 'admin') {
+            router.push('/admin');
+        }
+    }, [router]);
 
     const filteredBooks = useMemo(() => {
         const normalizedSearch = searchTerm.trim().toLowerCase();

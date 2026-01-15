@@ -17,7 +17,7 @@ from src.routes.v1.books.service import BookService
 from src.routes.v1.orders.service import OrderService
 from src.routes.v1.users.service import UserService
 from src.settings import settings
-from src.utils.auth import authenticate_user, hash_password
+from src.utils.auth import authenticate_admin, authenticate_user, hash_password
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -79,6 +79,7 @@ async def test_user(db_session: AsyncSession) -> DBUser:
         full_name="Test User",
         hashed_password=hash_password("testpassword123"),
         is_active=True,
+        role="admin",
     )
     db_session.add(user)
     await db_session.commit()
@@ -92,6 +93,7 @@ async def authenticated_client(client: AsyncClient, test_user: DBUser) -> AsyncC
         return test_user
 
     app.dependency_overrides[authenticate_user] = mock_authenticate_user
+    app.dependency_overrides[authenticate_admin] = mock_authenticate_user
     return client
 
 

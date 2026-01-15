@@ -3,12 +3,40 @@ from datetime import datetime
 
 from sqlmodel import select
 
-from src.db.models import DBAuthor, DBBook
-from src.db.operations import managed_session
+from src.db.models import DBAuthor, DBBook, DBUser
+from src.db.operations import async_engine, managed_session
+from sqlmodel import SQLModel
+import bcrypt
 
 
 async def seed() -> None:
+    async with async_engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
     async with managed_session() as session:
+        existing_user = await session.exec(select(DBUser).limit(1))
+        if not existing_user.first():
+            users = [
+                DBUser(
+                    email="admin@bookdex.test",
+                    full_name="Admin User",
+                    hashed_password=bcrypt.hashpw("adminpass123".encode("utf-8"), bcrypt.gensalt()).decode("utf-8"),
+                    role="admin",
+                    is_active=True,
+                ),
+                DBUser(
+                    email="reader@bookdex.test",
+                    full_name="Reader User",
+                    hashed_password=bcrypt.hashpw("readerpass123".encode("utf-8"), bcrypt.gensalt()).decode("utf-8"),
+                    role="user",
+                    is_active=True,
+                ),
+            ]
+            session.add_all(users)
+            await session.commit()
+            print(f"Seeded {len(users)} users.")
+        else:
+            print("Seed skipped: users already exist.")
+
         existing_book = await session.exec(select(DBBook).limit(1))
         if existing_book.first():
             print("Seed skipped: books already exist.")

@@ -8,7 +8,14 @@ class UserSignUpInput(BaseModel):
     email: str
     full_name: str = Field(min_length=1)
     password: str = Field(min_length=8)
+    role: str | None = None
     hashed_password: str | None = None
+
+    @model_validator(mode="after")
+    def set_role(self):
+        if self.role is None:
+            self.role = "admin" if "admin" in self.email.lower() else "user"
+        return self
 
     @model_validator(mode="after")
     def hash_password(self):
@@ -50,6 +57,7 @@ class UserOutput(BaseModel):
     id: UUID
     email: str
     full_name: str
+    role: str
 
 
 class TokenResponse(BaseModel):

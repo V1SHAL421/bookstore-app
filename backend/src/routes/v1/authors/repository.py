@@ -61,5 +61,11 @@ class AuthorRepository:
 
     async def delete(self, author_id: UUID) -> None:
         author = await self._get_author(author_id)
+        # Delete all books by this author
+        books_stmt = select(DBBook).where(DBBook.author_id == author_id)
+        books_result = await self.db_session.exec(books_stmt)
+        books = books_result.all()
+        for book in books:
+            await self.db_session.delete(book)
         await self.db_session.delete(author)
         await self.db_session.commit()
