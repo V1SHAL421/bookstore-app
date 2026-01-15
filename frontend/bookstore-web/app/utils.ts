@@ -3,6 +3,15 @@ let accessToken: string | null = null;
 let user: { id: string; email: string; full_name: string; role: string } | null = null;
 let refreshPromise: Promise<boolean> | null = null;
 
+function clearAuth() {
+  accessToken = null;
+  user = null;
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
+  }
+}
+
 export function setAccessToken(token: string | null) {
   accessToken = token;
 }
@@ -44,6 +53,7 @@ export async function refreshAccessToken(): Promise<boolean> {
     });
 
     if (!res.ok) {
+      clearAuth();
       return false;
     }
 
@@ -58,6 +68,7 @@ export async function refreshAccessToken(): Promise<boolean> {
     return Boolean(payload?.access_token);
   } catch (err) {
     console.error("Failed to refresh token:", err);
+    clearAuth();
     return false;
   }
 }
@@ -104,12 +115,19 @@ export async function apiFetch(endpoint: string, options?: RequestInit): Promise
       if (accessToken) {
         retryHeaders.set("Authorization", `Bearer ${accessToken}`);
       }
-      return fetch(`${API_BASE}${endpoint}`, {
+      const retryRes = await fetch(`${API_BASE}${endpoint}`, {
         ...options,
         headers: retryHeaders,
         credentials: "include",
       });
+      if (retryRes.status === 401) {
+        clearAuth();
+      }
+      return retryRes;
     }
+    clearAuth();
+  } else if (res.status === 401 && !isAuthEndpoint) {
+    clearAuth();
   }
 
   return res;
@@ -151,8 +169,7 @@ export async function logout(): Promise<void> {
   } catch (err) {
     console.error("Logout failed:", err);
   }
-  setAccessToken(null);
-  setUser(null);
+  clearAuth();
   if (typeof window !== "undefined") {
     window.location.href = "/auth";
   }

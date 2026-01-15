@@ -65,6 +65,10 @@ async def refresh(
     except jwt.JWTError:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
+    stored_jti = await redis_client.get(f"refresh_user:{user_id}")
+    if not stored_jti or stored_jti != jti:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
     stored_refresh = await redis_client.get(f"refresh:{jti}")
     if not stored_refresh or stored_refresh != refresh_token:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
@@ -134,7 +138,6 @@ async def logout(
             if remaining > 0:
                 await redis_client.set(f"blacklist:{token}", "1", ex=remaining)
         if user_id:
-            # Delete refresh state
             jti_key = f"refresh_user:{user_id}"
             jti = await redis_client.get(jti_key)
             if jti:
