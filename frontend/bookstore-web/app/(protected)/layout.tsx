@@ -14,6 +14,7 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -23,6 +24,7 @@ export default function ProtectedLayout({
       if (!isMounted) return;
       const currentUser = getUser();
       setIsAdmin(currentUser?.role === "admin");
+      setUserName(currentUser?.full_name ?? null);
     };
 
     hydrateSession();
@@ -38,9 +40,14 @@ export default function ProtectedLayout({
         <div className="flex h-screen flex-col">
           <header className="flex justify-between items-center p-4 border-b">
             <div></div>
-            <Button variant="outline" onClick={logout}>
-              Logout
-            </Button>
+            <div className="flex items-center gap-3">
+              {userName ? (
+                <span className="text-sm text-muted-foreground">{userName}</span>
+              ) : null}
+              <Button variant="outline" onClick={logout}>
+                Logout
+              </Button>
+            </div>
           </header>
           <div className="flex flex-1">
             <div className="flex-1 overflow-y-auto">

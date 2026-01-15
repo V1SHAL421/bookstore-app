@@ -166,7 +166,7 @@ export default function HomePage() {
         <div>
             {error ? <p>{error}</p> : null}
             <div className="mb-6">
-                <p className="text-sm uppercase tracking-widest text-gray-500">Catalog</p>
+                {/* <p className="text-sm uppercase tracking-widest text-gray-500">Available Books</p> */}
                 <div className="mt-2">
                     <h1 className="text-2xl font-semibold text-gray-900">Available Books</h1>
                 </div>
