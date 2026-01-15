@@ -1,4 +1,5 @@
 import uuid
+from typing import List
 
 from fastapi import Depends, HTTPException
 from sqlalchemy.exc import NoResultFound
@@ -37,10 +38,10 @@ class OrderService:
         except NoResultFound as exc:
             raise OrderNotFound from exc
 
-    async def list(self) -> list[DBOrder]:
+    async def list(self) -> List[DBOrder]:
         return await self.repository.list()
 
-    async def list_by_user(self, user_id: uuid.UUID) -> list[DBOrder]:
+    async def list_by_user(self, user_id: uuid.UUID) -> List[DBOrder]:
         return await self.repository.list_by_user(user_id=user_id)
 
     async def update(self, order_id: uuid.UUID, user_id: uuid.UUID, data: OrderUpdateInput) -> DBOrder:

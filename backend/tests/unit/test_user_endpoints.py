@@ -94,6 +94,7 @@ async def test_login_success(client: AsyncClient, test_user: DBUser):
     assert response.status_code == 200
     data = response.json()
     assert "access_token" in data
+    assert "refresh_token" not in data
     assert data["token_type"] == "bearer"
     assert data["user"]["email"] == test_user.email
     assert data["user"]["id"] == str(test_user.id)
@@ -264,28 +265,6 @@ async def test_delete_me_unauthorized(client: AsyncClient):
 
 
 @pytest.mark.asyncio(loop_scope="function")
-async def test_logout_success(client: AsyncClient, test_user: DBUser):
-    # First login to get access token
-    login_data = {
-        "email": test_user.email,
-        "password": "testpassword123",
-    }
-
-    login_response = await client.post("/api/v1/users/login", json=login_data)
-    assert login_response.status_code == 200
-    login_data_resp = login_response.json()
-    access_token = login_data_resp["access_token"]
-
-    # Now logout with the token
-    headers = {"Authorization": f"Bearer {access_token}"}
-    response = await client.post("/api/v1/users/logout", headers=headers)
-
-    assert response.status_code == 200
-    data = response.json()
-    assert data["message"] == "Logged out"
-
-
-@pytest.mark.asyncio(loop_scope="function")
 async def test_logout_success(client: AsyncClient, test_user: DBUser, monkeypatch):
     from src.utils.redis import redis_client
 
@@ -327,11 +306,16 @@ async def test_refresh_rotates_cookie(client: AsyncClient, test_user: DBUser, mo
     async def mock_get(key: str):
         return storage.get(key)
 
+    async def mock_delete(key: str):
+        storage.pop(key, None)
+
     monkeypatch.setattr(redis_client, "set", mock_set)
     monkeypatch.setattr(redis_client, "get", mock_get)
+    monkeypatch.setattr(redis_client, "delete", mock_delete)
 
-    refresh_token = create_refresh_token(test_user.id, test_user.role)
-    storage[f"refresh:{test_user.id}"] = refresh_token
+    refresh_token, jti = create_refresh_token(test_user.id, test_user.role)
+    storage[f"refresh:{jti}"] = refresh_token
+    storage[f"refresh_user:{test_user.id}"] = jti
 
     response = await client.post("/api/v1/users/refresh", cookies={"refresh_token": refresh_token})
 
@@ -339,9 +323,13 @@ async def test_refresh_rotates_cookie(client: AsyncClient, test_user: DBUser, mo
     data = response.json()
     assert data["user"]["id"] == str(test_user.id)
     assert "refresh_token=" in response.headers.get("set-cookie", "")
-    assert storage[f"refresh:{test_user.id}"] == data["refresh_token"]
+    # Check that old jti is deleted and new one is set
+    assert f"refresh:{jti}" not in storage
+    new_jti = storage.get(f"refresh_user:{test_user.id}")
+    assert new_jti is not None
+    assert f"refresh:{new_jti}" in storage
 
-    rotated_token = data["refresh_token"]
+    rotated_token = response.cookies.get("refresh_token")
     response_second = await client.post("/api/v1/users/refresh", cookies={"refresh_token": rotated_token})
 
     assert response_second.status_code == 200

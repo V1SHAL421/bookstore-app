@@ -1,3 +1,4 @@
+from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -21,7 +22,7 @@ async def create_author(
     return AuthorOutput(**author)
 
 
-@router.get("", response_model=list[AuthorOutput])
+@router.get("", response_model=List[AuthorOutput])
 async def list_authors(
     author_service: AuthorService = Depends(get_author_service),
     current_user: DBUser = Depends(authenticate_user),
@@ -40,7 +41,7 @@ async def get_author(
     return AuthorOutput(**author)
 
 
-@router.get("/{author_id}/books", response_model=list[BookOutput])
+@router.get("/{author_id}/books", response_model=List[BookOutput])
 async def get_books_by_author(
     author_id: UUID,
     book_service: BookService = Depends(get_book_service),

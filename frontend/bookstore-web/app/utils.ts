@@ -144,3 +144,16 @@ export async function getJSON<TResponse>(url: string): Promise<TResponse> {
 
   return payload as TResponse;
 }
+
+export async function logout(): Promise<void> {
+  try {
+    await apiFetch("/users/logout", { method: "POST" });
+  } catch (err) {
+    console.error("Logout failed:", err);
+  }
+  setAccessToken(null);
+  setUser(null);
+  if (typeof window !== "undefined") {
+    window.location.href = "/auth";
+  }
+}

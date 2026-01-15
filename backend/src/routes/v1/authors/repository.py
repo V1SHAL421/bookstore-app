@@ -1,3 +1,4 @@
+from typing import List
 from uuid import UUID
 
 from sqlmodel import select
@@ -45,7 +46,7 @@ class AuthorRepository:
             "books": books
         }
 
-    async def list(self) -> list[DBAuthor]:
+    async def list(self) -> List[DBAuthor]:
         stmt = select(DBAuthor)
         result = await self.db_session.exec(stmt)
         return result.all()

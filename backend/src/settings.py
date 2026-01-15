@@ -1,6 +1,6 @@
 """Application settings using Pydantic Settings."""
 
-from typing import Literal
+from typing import List, Literal
 
 from pydantic import computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     JWT_REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
     # CORS
-    CORS_ALLOW_ORIGINS: list[str] = ["http://localhost:3000"]
+    CORS_ALLOW_ORIGINS: List[str] = ["http://localhost:3000"]
 
 
     @computed_field

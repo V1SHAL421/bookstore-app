@@ -1,3 +1,4 @@
+from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -19,7 +20,7 @@ async def create_order(
     return OrderOutput(**order.model_dump())
 
 
-@router.get("", response_model=list[OrderOutput])
+@router.get("", response_model=List[OrderOutput])
 async def list_orders(
     order_service: OrderService = Depends(get_order_service),
     current_user: DBUser = Depends(authenticate_user),

@@ -22,12 +22,13 @@ async def signup(user_input: UserSignUpInput, user_service: UserService = Depend
 @router.post("/login", response_model=TokenResponse)
 async def login(response: Response, user: DBUser = Depends(authenticate_user_login)):
     access_token = create_access_token(user.id, user.role)
-    refresh_token = create_refresh_token(user.id, user.role)
+    refresh_token, jti = create_refresh_token(user.id, user.role)
     await redis_client.set(
-        f"refresh:{user.id}",
+        f"refresh:{jti}",
         refresh_token,
         ex=settings.JWT_REFRESH_TOKEN_EXPIRE_MINUTES * 60,
     )
+    await redis_client.set(f"refresh_user:{user.id}", jti, ex=settings.JWT_REFRESH_TOKEN_EXPIRE_MINUTES * 60)
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
@@ -37,7 +38,7 @@ async def login(response: Response, user: DBUser = Depends(authenticate_user_log
         max_age=settings.JWT_REFRESH_TOKEN_EXPIRE_MINUTES * 60,
         path="/",
     )
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token, user=UserOutput(**user.model_dump()))
+    return TokenResponse(access_token=access_token, user=UserOutput(**user.model_dump()))
 
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -56,14 +57,15 @@ async def refresh(
         payload = jwt.decode(refresh_token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
         user_id: str = payload.get("sub")
         token_type: str = payload.get("type")
-        if user_id is None or token_type != "refresh":
+        jti: str = payload.get("jti")
+        if user_id is None or token_type != "refresh" or jti is None:
             raise HTTPException(status_code=401, detail="Invalid refresh token")
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Refresh token has expired")
     except jwt.JWTError:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
-    stored_refresh = await redis_client.get(f"refresh:{user_id}")
+    stored_refresh = await redis_client.get(f"refresh:{jti}")
     if not stored_refresh or stored_refresh != refresh_token:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
@@ -71,13 +73,17 @@ async def refresh(
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="User inactive")
 
+    # Invalidate old jti
+    await redis_client.delete(f"refresh:{jti}")
+
     new_access_token = create_access_token(user.id, user.role)
-    new_refresh_token = create_refresh_token(user.id, user.role)
+    new_refresh_token, new_jti = create_refresh_token(user.id, user.role)
     await redis_client.set(
-        f"refresh:{user.id}",
+        f"refresh:{new_jti}",
         new_refresh_token,
         ex=settings.JWT_REFRESH_TOKEN_EXPIRE_MINUTES * 60,
     )
+    await redis_client.set(f"refresh_user:{user.id}", new_jti, ex=settings.JWT_REFRESH_TOKEN_EXPIRE_MINUTES * 60)
     response.set_cookie(
         key="refresh_token",
         value=new_refresh_token,
@@ -87,7 +93,7 @@ async def refresh(
         max_age=settings.JWT_REFRESH_TOKEN_EXPIRE_MINUTES * 60,
         path="/",
     )
-    return TokenResponse(access_token=new_access_token, refresh_token=new_refresh_token, user=UserOutput(**user.model_dump()))
+    return TokenResponse(access_token=new_access_token, user=UserOutput(**user.model_dump()))
 
 
 @router.get("/me", response_model=UserOutput)
@@ -113,16 +119,28 @@ async def delete_me(
 
 
 @router.post("/logout", status_code=200)
-async def logout(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def logout(
+    response: Response,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
     token = credentials.credentials
     try:
         payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=["HS256"], options={"verify_exp": False})
         exp = payload.get("exp")
+        user_id = payload.get("sub")
         if exp:
             now = int(datetime.now(timezone.utc).timestamp())
             remaining = exp - now
             if remaining > 0:
                 await redis_client.set(f"blacklist:{token}", "1", ex=remaining)
+        if user_id:
+            # Delete refresh state
+            jti_key = f"refresh_user:{user_id}"
+            jti = await redis_client.get(jti_key)
+            if jti:
+                await redis_client.delete(f"refresh:{jti}")
+                await redis_client.delete(jti_key)
     except jwt.JWTError:
         pass  # Invalid token, but still "logout"
+    response.delete_cookie(key="refresh_token", path="/")
     return {"message": "Logged out"}

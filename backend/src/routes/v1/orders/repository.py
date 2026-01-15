@@ -1,3 +1,4 @@
+from typing import List
 from uuid import UUID
 
 from sqlmodel import select
@@ -27,12 +28,12 @@ class OrderRepository:
         result = await self.db_session.exec(stmt)
         return result.one()
 
-    async def list(self) -> list[DBOrder]:
+    async def list(self) -> List[DBOrder]:
         stmt = select(DBOrder)
         result = await self.db_session.exec(stmt)
         return result.all()
 
-    async def list_by_user(self, user_id: UUID) -> list[DBOrder]:
+    async def list_by_user(self, user_id: UUID) -> List[DBOrder]:
         stmt = select(DBOrder).where(DBOrder.user_id == user_id)
         result = await self.db_session.exec(stmt)
         return result.all()

@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { CartProvider } from "@/app/CartContext";
 import { CartSidebar } from "@/components/CartSidebar";
-import { getUser, refreshAccessToken } from "@/app/utils";
+import { getUser, refreshAccessToken, logout } from "@/app/utils";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
 import { BreadcrumbProvider } from "@/app/BreadcrumbContext";
 
 export default function ProtectedLayout({
@@ -34,14 +35,22 @@ export default function ProtectedLayout({
   return (
     <BreadcrumbProvider>
       <CartProvider>
-        <div className="flex h-screen">
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-4">
-              <Breadcrumb />
-              {children}
+        <div className="flex h-screen flex-col">
+          <header className="flex justify-between items-center p-4 border-b">
+            <div></div>
+            <Button variant="outline" onClick={logout}>
+              Logout
+            </Button>
+          </header>
+          <div className="flex flex-1">
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-4">
+                <Breadcrumb />
+                {children}
+              </div>
             </div>
+            {isAdmin ? null : <CartSidebar />}
           </div>
-          {isAdmin ? null : <CartSidebar />}
         </div>
       </CartProvider>
     </BreadcrumbProvider>
