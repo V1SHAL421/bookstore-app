@@ -21,7 +21,7 @@ import {
 
 export default function AdminPage() {
     return (
-        <div className="p-4">
+        <div>
             <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
             <Tabs defaultValue="books" className="w-full">
                 <TabsList>
@@ -88,7 +88,7 @@ function BooksManagement() {
                             <TableCell>{book.title}</TableCell>
                             <TableCell>{book.description || "-"}</TableCell>
                             <TableCell>{book.author_name}</TableCell>
-                            <TableCell>${book.price.toFixed(2)}</TableCell>
+                            <TableCell>£{book.price.toFixed(2)}</TableCell>
                             <TableCell>{book.published_date ? new Date(book.published_date).toLocaleDateString() : "-"}</TableCell>
                             <TableCell>
                                 <EditBookDialog book={book} onBookUpdated={loadBooks} />

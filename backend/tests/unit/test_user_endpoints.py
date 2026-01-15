@@ -8,7 +8,7 @@ import pytest
 from httpx import AsyncClient
 from src.db.models import DBUser
 from src.routes.v1.users.service import UserService
-from src.utils.auth import verify_password
+from src.utils.auth import create_refresh_token, verify_password
 
 
 @pytest.mark.asyncio(loop_scope="function")
@@ -298,3 +298,36 @@ async def test_logout_no_token(client: AsyncClient):
     response = await client.post("/api/v1/users/logout")
 
     assert response.status_code == 403  # Forbidden, missing token
+
+
+@pytest.mark.asyncio(loop_scope="function")
+async def test_refresh_rotates_cookie(client: AsyncClient, test_user: DBUser, monkeypatch):
+    from src.utils.redis import redis_client
+
+    storage: dict[str, str] = {}
+
+    async def mock_set(key: str, value: str, ex: int | None = None):
+        storage[key] = value
+
+    async def mock_get(key: str):
+        return storage.get(key)
+
+    monkeypatch.setattr(redis_client, "set", mock_set)
+    monkeypatch.setattr(redis_client, "get", mock_get)
+
+    refresh_token = create_refresh_token(test_user.id, test_user.role)
+    storage[f"refresh:{test_user.id}"] = refresh_token
+
+    response = await client.post("/api/v1/users/refresh", cookies={"refresh_token": refresh_token})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["user"]["id"] == str(test_user.id)
+    assert "refresh_token=" in response.headers.get("set-cookie", "")
+    assert storage[f"refresh:{test_user.id}"] == data["refresh_token"]
+
+    rotated_token = data["refresh_token"]
+    response_second = await client.post("/api/v1/users/refresh", cookies={"refresh_token": rotated_token})
+
+    assert response_second.status_code == 200
+    assert "refresh_token=" in response_second.headers.get("set-cookie", "")

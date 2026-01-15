@@ -43,6 +43,7 @@ async def login(response: Response, user: DBUser = Depends(authenticate_user_log
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh(
     request: Request,
+    response: Response,
     refresh_input: RefreshTokenInput | None = None,
     user_service: UserService = Depends(get_user_service),
 ):
@@ -76,6 +77,15 @@ async def refresh(
         f"refresh:{user.id}",
         new_refresh_token,
         ex=settings.JWT_REFRESH_TOKEN_EXPIRE_MINUTES * 60,
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=new_refresh_token,
+        httponly=True,
+        secure=settings.ENVIRONMENT != "LOCAL",
+        samesite="lax",
+        max_age=settings.JWT_REFRESH_TOKEN_EXPIRE_MINUTES * 60,
+        path="/",
     )
     return TokenResponse(access_token=new_access_token, refresh_token=new_refresh_token, user=UserOutput(**user.model_dump()))
 

@@ -1,4 +1,5 @@
 import uuid
+from typing import Any, Dict, List
 
 from fastapi import Depends, HTTPException
 from sqlalchemy.exc import NoResultFound
@@ -37,8 +38,11 @@ class BookService:
         except NoResultFound as exc:
             raise BookNotFound from exc
 
-    async def list(self) -> list[dict]:
+    async def list(self) -> List[Dict[str, Any]]:
         return await self.repository.list()
+
+    async def list_by_author(self, author_id: uuid.UUID) -> List[Dict[str, Any]]:
+        return await self.repository.list_by_author(author_id=author_id)
 
     async def update(self, book_id: uuid.UUID, data: BookUpdateInput) -> DBBook:
         book = await self.retrieve(book_id=book_id)

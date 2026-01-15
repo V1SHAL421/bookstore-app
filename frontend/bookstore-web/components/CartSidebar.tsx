@@ -18,7 +18,7 @@ export function CartSidebar() {
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
-            <p className="text-muted-foreground">Your cart is empty</p>
+            <p className="text-muted-foreground">Select a book to add it to your cart.</p>
           ) : (
             <div className="space-y-4">
               {items.map((item) => (
@@ -26,7 +26,7 @@ export function CartSidebar() {
                   <div className="flex-1">
                     <h4 className="font-medium text-sm">{item.title}</h4>
                     <p className="text-sm text-muted-foreground">
-                      ${item.price.toFixed(2)} each
+                      £{item.price.toFixed(2)} each
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -45,20 +45,13 @@ export function CartSidebar() {
                     >
                       +
                     </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removeItem(item.id)}
-                    >
-                      Remove
-                    </Button>
                   </div>
                 </div>
               ))}
               <div className="border-t pt-4">
                 <div className="flex justify-between font-semibold">
                   <span>Total:</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>£{total.toFixed(2)}</span>
                 </div>
                 <Button
                   className="w-full mt-2"

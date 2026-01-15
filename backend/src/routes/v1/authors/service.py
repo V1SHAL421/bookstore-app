@@ -1,4 +1,5 @@
 import uuid
+from typing import Any, Dict, List
 
 from fastapi import Depends, HTTPException
 from sqlalchemy.exc import NoResultFound
@@ -64,7 +65,7 @@ class AuthorService:
         except NoResultFound as exc:
             raise AuthorNotFound from exc
 
-    async def list(self) -> list[dict]:
+    async def list(self) -> List[Dict[str, Any]]:
         authors = await self.repository.list()
         result = []
         for author in authors:

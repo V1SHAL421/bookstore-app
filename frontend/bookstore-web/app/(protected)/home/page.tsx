@@ -1,11 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getJSON, getUser } from "@/app/utils";
 import { bookSchema } from "@/app/schema";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ShoppingCart } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useCart } from "@/app/CartContext";
 import {
     Table,
     TableBody,
@@ -24,6 +26,7 @@ import {
 
 export default function HomePage() {
     const router = useRouter();
+    const { addItem } = useCart();
 
     type BookResponse = ReturnType<typeof bookSchema.parse>;
 
@@ -31,6 +34,8 @@ export default function HomePage() {
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [maxPrice, setMaxPrice] = useState<number | null>(null);
+    const [page, setPage] = useState(1);
+    const pageSize = 10;
 
     useEffect(() => {
         const user = getUser();
@@ -52,14 +57,25 @@ export default function HomePage() {
         });
     }, [books, searchTerm, maxPrice]);
 
+    const totalPages = Math.max(1, Math.ceil(filteredBooks.length / pageSize));
+    const pagedBooks = useMemo(() => {
+        const start = (page - 1) * pageSize;
+        return filteredBooks.slice(start, start + pageSize);
+    }, [filteredBooks, page]);
+
     const columns: ColumnDef<BookResponse>[] = [
         {
           accessorKey: "title",
           header: "Title",
           cell: ({ getValue, row }) => (
-            <Link href={`/book/${row.original.id}`} className="text-blue-600 hover:underline">
-              {getValue<string>()}
-            </Link>
+            <button
+              onClick={() => router.push(`/book/${row.original.id}`)}
+              className="text-blue-600 hover:underline bg-transparent border-none p-0 cursor-pointer"
+            >
+              <span className="text-lg font-semibold text-gray-900">
+                {getValue<string>()}
+              </span>
+            </button>
           ),
         },
         {
@@ -70,15 +86,18 @@ export default function HomePage() {
           accessorKey: "author_name",
           header: "Author",
           cell: ({ getValue, row }) => (
-            <Link href={`/author/${row.original.author_id}`} className="text-blue-600 hover:underline">
+            <button
+              onClick={() => router.push(`/author/${row.original.author_id}`)}
+              className="text-blue-600 hover:underline bg-transparent border-none p-0 cursor-pointer"
+            >
               {getValue<string>()}
-            </Link>
+            </button>
           ),
         },
         {
           accessorKey: "price",
           header: "Price",
-          cell: ({ getValue }) => `${getValue<number>().toFixed(2)}`,
+          cell: ({ getValue }) => `£${getValue<number>().toFixed(2)}`,
         },
         {
           accessorKey: "published_date",
@@ -88,10 +107,32 @@ export default function HomePage() {
             return value ? new Date(value).toLocaleDateString() : "-";
           },
         },
+        {
+          id: "add_to_cart",
+          header: "Add",
+          cell: ({ row }) => (
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={() => {
+                  addItem({
+                    id: row.original.id,
+                    title: row.original.title,
+                    price: row.original.price,
+                  });
+                }}
+                aria-label={`Add ${row.original.title} to cart`}
+              >
+                <ShoppingCart className="h-4 w-4" />
+              </Button>
+            </div>
+          ),
+        },
       ];
 
     const table = useReactTable({
-        data: filteredBooks,
+        data: pagedBooks,
         columns,
         getCoreRowModel: getCoreRowModel(),
         });
@@ -123,8 +164,14 @@ export default function HomePage() {
     }, []);
 
     return (
-        <div className="p-4">
+        <div>
             {error ? <p>{error}</p> : null}
+            <div className="mb-6">
+                <p className="text-sm uppercase tracking-widest text-gray-500">Catalog</p>
+                <div className="mt-2">
+                    <h1 className="text-2xl font-semibold text-gray-900">Available Books</h1>
+                </div>
+            </div>
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end">
                 <div className="flex-1">
                     <label className="text-sm font-medium" htmlFor="book-search">
@@ -134,7 +181,10 @@ export default function HomePage() {
                         id="book-search"
                         placeholder="Search by title, description, or author"
                         value={searchTerm}
-                        onChange={(event) => setSearchTerm(event.target.value)}
+                        onChange={(event) => {
+                            setSearchTerm(event.target.value);
+                            setPage(1);
+                        }}
                     />
                 </div>
                 <div className="w-full sm:w-40">
@@ -151,17 +201,26 @@ export default function HomePage() {
                         onChange={(event) => {
                             const value = event.target.value;
                             setMaxPrice(value === "" ? null : Number(value));
+                            setPage(1);
                         }}
                     />
                 </div>
             </div>
             <Table>
-                <TableCaption>Available Books</TableCaption>
                 <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>
                             {headerGroup.headers.map((header) => (
-                                <TableHead key={header.id}>
+                                <TableHead
+                                    key={header.id}
+                                    className={
+                                        header.column.id === "title"
+                                            ? "border-l-4 border-gray-900 pl-3 font-semibold text-gray-900"
+                                            : header.column.id === "add_to_cart"
+                                            ? "text-right"
+                                            : undefined
+                                    }
+                                >
                                     {header.isPlaceholder
                                         ? null
                                         : flexRender(header.column.columnDef.header, header.getContext())}
@@ -190,6 +249,27 @@ export default function HomePage() {
                     )}
                 </TableBody>
             </Table>
+            <div className="mt-4 flex items-center justify-end gap-3">
+                <span className="text-sm text-gray-500">
+                    Page {page} of {totalPages}
+                </span>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                    disabled={page === 1}
+                >
+                    Previous
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={page === totalPages}
+                >
+                    Next
+                </Button>
+            </div>
         </div>
     )
 }

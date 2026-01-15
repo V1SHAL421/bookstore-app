@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends
 from src.db.models import DBUser
 from src.routes.v1.authors.schema import AuthorCreateInput, AuthorOutput, AuthorUpdateInput
 from src.routes.v1.authors.service import AuthorService, get_author_service
+from src.routes.v1.books.schema import BookOutput
+from src.routes.v1.books.service import BookService, get_book_service
 from src.utils.auth import authenticate_admin, authenticate_user
 
 router = APIRouter(prefix="/authors", tags=["authors"])
@@ -36,6 +38,16 @@ async def get_author(
 ):
     author = await author_service.retrieve(author_id=author_id)
     return AuthorOutput(**author)
+
+
+@router.get("/{author_id}/books", response_model=list[BookOutput])
+async def get_books_by_author(
+    author_id: UUID,
+    book_service: BookService = Depends(get_book_service),
+    current_user: DBUser = Depends(authenticate_user),
+):
+    books = await book_service.list_by_author(author_id=author_id)
+    return [BookOutput(**book) for book in books]
 
 
 @router.patch("/{author_id}", response_model=AuthorOutput)

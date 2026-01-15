@@ -12,6 +12,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { postJSON, setAccessToken, setUser } from "@/app/utils";
+import { AnimatedText } from "@/components/ui/animated-text";
 
 export default function AuthPage() {
     const router = useRouter();
@@ -79,18 +80,23 @@ export default function AuthPage() {
     };
     
     return (
-        <div className="size-full flex items-center justify-center bg-background px-4">
-            <Card className="w-full max-w-md">
-                <CardHeader>
-                    <CardTitle>Welcome to Bookdex</CardTitle>
-                    <CardDescription>Login or create an account to continue</CardDescription>
-                </CardHeader>
+        <div className="size-full flex flex-col items-center justify-start bg-gray-50 px-4 py-10">
+            <div className="text-center mb-6">
+                <AnimatedText text="Bookdex" />
+            </div>
+            <div className="relative w-full max-w-md">
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 border-t border-gray-200" />
+                <Card className="relative">
+                    <CardHeader>
+                        <CardTitle>Access Your Account</CardTitle>
+                        <CardDescription>Create an account to order books and track your purchases.</CardDescription>
+                    </CardHeader>
 
-                <CardContent>
+                    <CardContent>
                     <Tabs defaultValue="login" className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="login">Login</TabsTrigger>
-                            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                            <TabsTrigger value="login" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors">Login</TabsTrigger>
+                            <TabsTrigger value="signup" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-colors">Sign Up</TabsTrigger>
                         </TabsList>
 
                         {globalError ? (
@@ -177,8 +183,9 @@ export default function AuthPage() {
                             </form>
                         </TabsContent>
                     </Tabs>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }

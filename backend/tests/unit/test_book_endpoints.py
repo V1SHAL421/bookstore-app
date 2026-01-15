@@ -159,6 +159,58 @@ async def test_list_books_with_data(authenticated_client: AsyncClient):
 
 
 @pytest.mark.asyncio(loop_scope="function")
+async def test_list_books_by_author(authenticated_client: AsyncClient):
+    author1_response = await authenticated_client.post("/api/v1/authors", json={"name": "Author One"})
+    assert author1_response.status_code == 201
+    author1 = author1_response.json()
+
+    author2_response = await authenticated_client.post("/api/v1/authors", json={"name": "Author Two"})
+    assert author2_response.status_code == 201
+    author2 = author2_response.json()
+
+    book1_response = await authenticated_client.post(
+        "/api/v1/books",
+        json={"title": "Author One Book A", "author_id": author1["id"], "price": 12.99},
+    )
+    assert book1_response.status_code == 201
+    book1 = book1_response.json()
+
+    book2_response = await authenticated_client.post(
+        "/api/v1/books",
+        json={"title": "Author One Book B", "author_id": author1["id"], "price": 15.99},
+    )
+    assert book2_response.status_code == 201
+    book2 = book2_response.json()
+
+    book3_response = await authenticated_client.post(
+        "/api/v1/books",
+        json={"title": "Author Two Book", "author_id": author2["id"], "price": 9.99},
+    )
+    assert book3_response.status_code == 201
+
+    response = await authenticated_client.get(f"/api/v1/authors/{author1['id']}/books")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    assert {b["id"] for b in data} == {book1["id"], book2["id"]}
+    assert all(b["author_id"] == author1["id"] for b in data)
+
+
+@pytest.mark.asyncio(loop_scope="function")
+async def test_list_books_by_author_empty(authenticated_client: AsyncClient):
+    author_response = await authenticated_client.post("/api/v1/authors", json={"name": "Empty Author"})
+    assert author_response.status_code == 201
+    author = author_response.json()
+
+    response = await authenticated_client.get(f"/api/v1/authors/{author['id']}/books")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data == []
+
+
+@pytest.mark.asyncio(loop_scope="function")
 async def test_get_book_success(authenticated_client: AsyncClient):
     # Create test author and book via API
     author_data = {"name": "Test Author"}

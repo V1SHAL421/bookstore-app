@@ -84,7 +84,7 @@ export function CheckoutDialog({ open, onOpenChange, total }: CheckoutDialogProp
           <DialogDescription>
             {success
               ? "Your order has been successfully placed."
-              : `Please confirm your order total of ${total.toFixed(2)}.`}
+              : `Please confirm your order total of £${total.toFixed(2)}.`}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
@@ -103,14 +103,14 @@ export function CheckoutDialog({ open, onOpenChange, total }: CheckoutDialogProp
                     <span>
                       {item.title} (x{item.quantity})
                     </span>
-                    <span>${(item.price * item.quantity).toFixed(2)}</span>
+                    <span>£{(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
               <div className="border-t pt-2 mt-4">
                 <div className="flex justify-between font-bold">
                   <span>Total:</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>£{total.toFixed(2)}</span>
                 </div>
               </div>
               {error && (

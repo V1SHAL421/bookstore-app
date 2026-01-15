@@ -1,3 +1,4 @@
+from typing import Any, Dict, List
 from uuid import UUID
 
 from sqlmodel import select
@@ -39,7 +40,7 @@ class BookRepository:
         result = await self.db_session.exec(stmt)
         return result.one()._asdict()
 
-    async def list(self) -> list[dict]:
+    async def list(self) -> List[Dict[str, Any]]:
         stmt = select(
             DBBook.id,
             DBBook.title,
@@ -49,6 +50,19 @@ class BookRepository:
             DBBook.price,
             DBBook.published_date
         ).join(DBAuthor, DBBook.author_id == DBAuthor.id)
+        result = await self.db_session.exec(stmt)
+        return [row._asdict() for row in result.all()]
+
+    async def list_by_author(self, author_id: UUID) -> List[Dict[str, Any]]:
+        stmt = select(
+            DBBook.id,
+            DBBook.title,
+            DBBook.author_id,
+            DBAuthor.name.label("author_name"),
+            DBBook.description,
+            DBBook.price,
+            DBBook.published_date
+        ).join(DBAuthor, DBBook.author_id == DBAuthor.id).where(DBBook.author_id == author_id)
         result = await self.db_session.exec(stmt)
         return [row._asdict() for row in result.all()]
 

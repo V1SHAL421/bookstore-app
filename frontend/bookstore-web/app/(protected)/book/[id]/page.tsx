@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import { getJSON } from "@/app/utils";
 import { bookSchema } from "@/app/schema";
 import { useCart } from "@/app/CartContext";
 import { Button } from "@/components/ui/button";
+import { useBreadcrumb } from "@/app/BreadcrumbContext";
 import {
   Card,
   CardHeader,
@@ -18,6 +18,8 @@ import {
 type BookResponse = ReturnType<typeof bookSchema.parse>;
 
 function BookHeader({ book }: { book: BookResponse }) {
+  const router = useRouter();
+
   return (
     <Card className="mb-8">
       <CardHeader className="text-center">
@@ -26,9 +28,12 @@ function BookHeader({ book }: { book: BookResponse }) {
         </CardTitle>
         <CardDescription className="mt-2 text-lg">
           by{" "}
-          <Link href={`/author/${book.author_id}`} className="text-blue-600 hover:underline">
+          <button
+            onClick={() => router.push(`/author/${book.author_id}`)}
+            className="text-blue-600 hover:underline bg-transparent border-none p-0 cursor-pointer"
+          >
             {book.author_name}
-          </Link>
+          </button>
         </CardDescription>
       </CardHeader>
       {book.description && (
@@ -42,10 +47,13 @@ function BookHeader({ book }: { book: BookResponse }) {
 
 export default function BookDetailPage() {
     const params = useParams();
+    const router = useRouter();
     const bookId = params.id as string;
     const { addItem } = useCart();
+    const { setTitle } = useBreadcrumb();
 
     const [book, setBook] = useState<BookResponse | null>(null);
+    const [otherBooks, setOtherBooks] = useState<BookResponse[]>([]);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -56,6 +64,7 @@ export default function BookDetailPage() {
                 const response = await getJSON<BookResponse>(`/books/${bookId}`);
                 if (isMounted) {
                     setBook(response);
+                    setTitle(response.title);
                 }
             } catch (err) {
                 console.error("Failed to load book:", err);
@@ -74,6 +83,31 @@ export default function BookDetailPage() {
         };
     }, [bookId]);
 
+    useEffect(() => {
+        if (!book) return;
+
+        let isMounted = true;
+
+        const loadOtherBooks = async () => {
+            try {
+                const response = await getJSON<BookResponse[]>(`/authors/${book.author_id}/books`);
+                if (isMounted) {
+                    const filtered = response.filter(b => b.id !== book.id).slice(0, 3);
+                    setOtherBooks(filtered);
+                }
+            } catch (err) {
+                console.error("Failed to load other books:", err);
+                // No error state for this, just log
+            }
+        };
+
+        loadOtherBooks();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [book]);
+
     if (error) {
         return <p>{error}</p>;
     }
@@ -83,16 +117,16 @@ export default function BookDetailPage() {
     }
 
     return (
-        <div className="p-4">
+        <div>
             <BookHeader book={book} />
             <Card className="container">
                 <CardHeader>
-                    <CardTitle>Details</CardTitle>
+                    <CardTitle>Book Details</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-1 @md:grid-cols-2 gap-4">
                         <div>
-                            <strong>Price:</strong> ${book.price.toFixed(2)}
+                            <strong>Price:</strong> £{book.price.toFixed(2)}
                         </div>
                         <div>
                             <strong>Published Date:</strong>{" "}
@@ -101,6 +135,27 @@ export default function BookDetailPage() {
                     </div>
                 </CardContent>
             </Card>
+            {otherBooks.length > 0 && (
+                <Card className="container mt-6">
+                    <CardHeader>
+                        <CardTitle>More by {book.author_name}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ul className="space-y-2">
+                            {otherBooks.map((otherBook) => (
+                                <li key={otherBook.id}>
+                                    <button
+                                        onClick={() => router.push(`/book/${otherBook.id}`)}
+                                        className="text-blue-600 hover:underline bg-transparent border-none p-0 cursor-pointer"
+                                    >
+                                        {otherBook.title}
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    </CardContent>
+                </Card>
+            )}
             <div className="mt-4">
                 <Button
                     onClick={() => {
@@ -116,7 +171,12 @@ export default function BookDetailPage() {
                 >
                     Add to Cart
                 </Button>
-                <Link href="/home" className="text-blue-600 hover:underline">Back to Home</Link>
+                <button
+                  onClick={() => router.push("/home")}
+                  className="text-blue-600 hover:underline bg-transparent border-none p-0 cursor-pointer"
+                >
+                  Continue Browsing
+                </button>
             </div>
         </div>
     );

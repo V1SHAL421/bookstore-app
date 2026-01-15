@@ -55,6 +55,18 @@ async def seed() -> None:
                 name="Haruki Murakami",
                 bio="Japanese novelist known for surreal, lyrical stories.",
             ),
+            DBAuthor(
+                name="Toni Morrison",
+                bio="Nobel Prize-winning author of richly layered American novels.",
+            ),
+            DBAuthor(
+                name="Neil Gaiman",
+                bio="Storyteller blending myth, fantasy, and dark humor.",
+            ),
+            DBAuthor(
+                name="Isabel Allende",
+                bio="Chronicler of love, exile, and magical realism.",
+            ),
         ]
         session.add_all(authors)
         await session.flush()

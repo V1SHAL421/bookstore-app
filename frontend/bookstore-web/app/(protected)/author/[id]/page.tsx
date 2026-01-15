@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import { getJSON } from "@/app/utils";
+import { useBreadcrumb } from "@/app/BreadcrumbContext";
 import {
   Card,
   CardHeader,
@@ -60,7 +60,9 @@ function AuthorHeader({ author }: { author: AuthorResponse }) {
 
 export default function AuthorDetailPage() {
     const params = useParams();
+    const router = useRouter();
     const authorId = params.id as string;
+    const { setTitle } = useBreadcrumb();
 
     const [author, setAuthor] = useState<AuthorResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -73,6 +75,7 @@ export default function AuthorDetailPage() {
                 const response = await getJSON<AuthorResponse>(`/authors/${authorId}`);
                 if (isMounted) {
                     setAuthor(response);
+                    setTitle(response.name);
                 }
             } catch (err) {
                 console.error("Failed to load author:", err);
@@ -96,15 +99,20 @@ export default function AuthorDetailPage() {
           accessorKey: "title",
           header: "Title",
           cell: ({ getValue, row }) => (
-            <Link href={`/book/${row.original.id}`} className="text-blue-600 hover:underline">
-              {getValue<string>()}
-            </Link>
+            <button
+              onClick={() => router.push(`/book/${row.original.id}`)}
+              className="text-blue-600 hover:underline bg-transparent border-none p-0 cursor-pointer"
+            >
+              <span className="text-lg font-semibold text-gray-900">
+                {getValue<string>()}
+              </span>
+            </button>
           ),
         },
         {
           accessorKey: "price",
           header: "Price",
-          cell: ({ getValue }) => `${getValue<number>().toFixed(2)}`,
+          cell: ({ getValue }) => `£${getValue<number>().toFixed(2)}`,
         },
         {
           accessorKey: "published_date",
@@ -131,10 +139,13 @@ export default function AuthorDetailPage() {
     }
 
     return (
-        <div className="p-4">
+        <div>
             <AuthorHeader author={author} />
+            <div className="mb-6">
+                <h1 className="text-2xl font-semibold text-gray-900">Books by {author.name}</h1>
+                <p className="text-sm text-gray-600 mt-2">Select a book to view details or add it to your cart.</p>
+            </div>
             <Table>
-                <TableCaption>Books by {author.name}</TableCaption>
                 <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>
@@ -168,7 +179,12 @@ export default function AuthorDetailPage() {
                     )}
                 </TableBody>
             </Table>
-            <Link href="/home" className="block mt-4 text-blue-600 hover:underline">Back to Home</Link>
+            <button
+              onClick={() => router.push("/home")}
+              className="block mt-4 text-blue-600 hover:underline bg-transparent border-none p-0 cursor-pointer"
+            >
+              Continue Browsing
+            </button>
         </div>
     );
 }

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -17,4 +18,4 @@ class AuthorOutput(BaseModel):
     id: UUID
     name: str
     bio: str | None
-    books: list[dict]  # list of book dicts
+    books: List[Dict[str, Any]]  # list of book dicts
