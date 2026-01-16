@@ -27,7 +27,7 @@ With more time, this could be extended to a super-admin–controlled promotion f
 
 ### Frontend architecture and user flow
 
-The frontend is implemented as a **Next.js + React application** covering the full bookstore workflow: discovery, browsing, ordering, and administration.
+The frontend is implemented as a **Next.js and React application** covering the full bookstore workflow: discovery, browsing, ordering, and administration.
 
 #### Landing and authentication
 
@@ -69,7 +69,7 @@ All admin routes are protected server-side. Frontend role checks exist purely fo
 ### Key technical decisions and trade-offs
 
 - **Client-side filtering & pagination** were chosen for MVP speed and UX iteration, with a clear path to move server-side at scale.
-- **Short-lived access tokens + refresh tokens in HTTP-only cookies** reduce XSS risk.
+- **Short-lived access tokens and refresh tokens in HTTP-only cookies** reduce XSS risk.
 - **Refresh token rotation with `jti`** enables single-session enforcement and clean logout at the cost of additional Redis complexity.
 - **Seeded admin users** trade convenience for security and correctness.
 - **Selective UI libraries** accelerated development without locking into heavy abstractions.
