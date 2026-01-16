@@ -19,7 +19,7 @@ I explicitly avoided any approach where admin status could be:
 - Inferred from user input (e.g. email strings)
 - Trusted based on frontend state
 
-Instead, signup is hard-locked to standard users, and admin users are created via a controlled server-side process (seed script). This completely removes privilege-escalation risk during signup and mirrors how real systems bootstrap administrative access.
+Instead, signup is hard-locked to standard users, and admin users are created via a controlled server-side process (seed script). This decision was driven by identifying a privilege-escalation risk in the original flow, where admin status could be inferred during signup. Hard-locking roles eliminated this entire class of vulnerability and mirrors how real systems bootstrap administrative access.
 
 With more time, this could be extended to a super-admin–controlled promotion flow, keeping all authorization decisions centralized and auditable.
 
@@ -46,13 +46,15 @@ The main catalog prioritises **speed of interaction** over deep navigation. I us
 - Budget-based filtering via maximum price
 - Immediate add-to-cart actions
 
+Originally, users were required to navigate to a book details page before adding items to the cart. This introduced unnecessary friction and made the primary action unclear. I moved add-to-cart directly into the catalog view, reducing clicks and navigation while making the action explicit. This also better supports conversion-oriented flows and could be evaluated further via A/B testing in a real environment.
+
 Book detail pages and author pages are implemented as secondary drill-down views. While backend metadata is currently limited, the structure allows future expansion without changing navigation patterns.
 
 ---
 
 ### Cart and checkout design
 
-The shopping cart is implemented as a **persistent sidebar**, visible throughout browsing, to reduce friction between discovery and checkout. Checkout is handled via a modal to keep users in context. Payment is simulated, but order records are created to reflect realistic backend behaviour.
+The shopping cart is implemented as a **persistent sidebar**, visible throughout browsing, rather than as a separate page. This reduces checkout friction by keeping selections visible and actionable at all times. Checkout is handled via a modal to keep users in context. Payment is simulated, but order records are created to reflect realistic backend behaviour.
 
 ---
 
@@ -60,7 +62,9 @@ The shopping cart is implemented as a **persistent sidebar**, visible throughout
 
 Admin functionality is isolated from regular user flows. Admins access a dedicated area to:
 - View, create, edit, and delete books
-- Associate books with existing authors via a selector (rather than raw IDs)
+- Associate books with existing authors
+
+During implementation, book creation initially required entering a raw `author_id`. While technically correct, this proved to be a poor admin experience. I replaced this with a selector populated from the backend, preserving data integrity while significantly improving usability.
 
 All admin routes are protected server-side. Frontend role checks exist purely for UX and are never trusted for authorization.
 
@@ -82,12 +86,7 @@ These decisions balanced development speed, outcome quality, maintainability, an
 
 ### Development workflow and use of AI tools
 
-I used a **hybrid workflow**, writing core logic myself while using AI tools as productivity aids for:
-- Security, performance, and code reviews
-- Debugging edge cases
-- Validating design decisions (e.g. auth flows)
-
-All architectural decisions remained explicit and understood; AI tools accelerated iteration rather than replacing reasoning.
+I used a **hybrid workflow**, writing core logic myself while using AI tools as productivity aids for security reviews, performance analysis, debugging edge cases, and validating design decisions (e.g. authentication flows). All architectural decisions remained explicit and understood; AI tools accelerated iteration rather than replacing reasoning.
 
 ---
 
@@ -97,9 +96,11 @@ I made targeted backend changes focused on correctness and security:
 
 - Extended authentication with short-lived access tokens, refresh cookies, rotation via `jti`, and explicit logout invalidation
 - Removed client-controlled role assignment and hard-locked signup roles
-- Added SQL joins to fetch books together with their authors, simplifying frontend data access
+- Added SQL joins to return books with author metadata in a single response, rather than fetching books and authors separately on the frontend
 - Added backend tests covering refresh rotation and logout semantics
 - Introduced seed scripts and developer tooling for repeatable setup
+
+One notable issue discovered during review was that refresh tokens were rotated in Redis but the refresh cookie was not updated. This caused the second refresh attempt to fail with a 401. Updating the refresh endpoint to reset the cookie resolved the issue and aligned refresh behaviour with login.
 
 Secrets are configured for local development; production would inject them via a secret manager.
 
@@ -131,13 +132,9 @@ I intentionally developed in phases:
 2. UX improvements  
 3. Security and performance hardening  
 
-Notable refinements included:
-- Moving add-to-cart directly into the catalog view
-- Making the cart persistent rather than a separate page
-- Replacing raw `author_id` inputs with author selectors in admin flows
-- Fixing stale auth state and logout semantics discovered during review
+Several refinements were driven by issues uncovered during review. For example, logout initially invalidated access tokens but left refresh sessions active, allowing new access tokens to be minted post-logout. This was fixed by explicitly deleting refresh state in Redis. I also added targeted tests around refresh rotation after fixing this behaviour.
 
-These changes prioritised reducing friction in critical user paths over adding new features.
+These changes prioritised reducing friction and eliminating correctness issues over adding new features.
 
 ---
 
@@ -147,7 +144,7 @@ These changes prioritised reducing friction in critical user paths over adding n
 
 The implementation successfully delivers all required user flows without unnecessary complexity. The decision to prioritise correctness first, followed by UX and security refinement, proved effective and kept the project focused.
 
-I’m particularly satisfied with the clear separation of frontend and backend responsibilities and with moving data joins server-side to simplify the UI.
+I’m particularly satisfied with moving data joins server-side to simplify frontend logic and with restructuring user flows (e.g. add-to-cart placement) to better match real user behaviour.
 
 ---
 
@@ -175,6 +172,14 @@ Given more time, I would focus on:
 3. **Server-side search and pagination** for scalability  
 4. **Admin auditability**, including role hierarchies and change logs  
 5. **Expanded testing and instrumentation**
+
+---
+
+### Non-functional considerations
+
+Accessibility was partially addressed through semantic HTML, form labels, validation errors, and focusable UI components provided by shadcn/ui. With more time, I would conduct a WCAG-focused audit covering keyboard navigation, focus order, ARIA roles, and color contrast, and add automated accessibility testing (e.g. axe-core).
+
+I would also add global error boundaries, consistent loading and empty states, and clearer user-facing failure messaging. Production hardening would include structured logging, basic observability, and standard security headers (CSP, HSTS, X-Frame-Options).
 
 ---
 
