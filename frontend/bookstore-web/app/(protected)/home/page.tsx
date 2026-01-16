@@ -62,7 +62,7 @@ export default function HomePage() {
         return filteredBooks.slice(start, start + pageSize);
     }, [filteredBooks, page]);
 
-    const columns: ColumnDef<BookResponse>[] = [
+    const columns = useMemo<ColumnDef<BookResponse>[]>(() => [
         {
           accessorKey: "title",
           header: "Title",
@@ -128,7 +128,7 @@ export default function HomePage() {
             </div>
           ),
         },
-      ];
+      ], []);
 
     const table = useReactTable({
         data: pagedBooks,

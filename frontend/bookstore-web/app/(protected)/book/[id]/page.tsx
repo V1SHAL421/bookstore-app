@@ -7,6 +7,7 @@ import { bookSchema } from "@/app/schema";
 import { useCart } from "@/app/CartContext";
 import { Button } from "@/components/ui/button";
 import { useBreadcrumb } from "@/app/BreadcrumbContext";
+import { HeroSkeleton } from "@/components/ui/hero-skeleton";
 import {
   Card,
   CardHeader,
@@ -21,7 +22,7 @@ function BookHeader({ book }: { book: BookResponse }) {
   const router = useRouter();
 
   return (
-    <Card className="mb-8">
+    <Card className="mb-4 md:mb-6">
       <CardHeader className="text-center">
         <CardTitle className="text-3xl font-bold">
           {book.title}
@@ -112,72 +113,72 @@ export default function BookDetailPage() {
         return <p>{error}</p>;
     }
 
-    if (!book) {
-        return <p>Loading...</p>;
-    }
-
     return (
         <div>
-            <BookHeader book={book} />
-            <Card className="container">
-                <CardHeader>
-                    <CardTitle>Book Details</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 @md:grid-cols-2 gap-4">
-                        <div>
-                            <strong>Price:</strong> £{book.price.toFixed(2)}
-                        </div>
-                        <div>
-                            <strong>Published Date:</strong>{" "}
-                            {book.published_date ? new Date(book.published_date).toLocaleDateString() : "Unknown"}
-                        </div>
+            <section className="min-h-[32vh] md:min-h-[45vh]">
+                {book ? <BookHeader book={book} /> : <HeroSkeleton />}
+            </section>
+            {book && (
+                <>
+                    <Card className="container">
+                        <CardHeader>
+                            <CardTitle>Book Details</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 @md:grid-cols-2 gap-4">
+                                <div>
+                                    <strong>Price:</strong> £{book.price.toFixed(2)}
+                                </div>
+                                <div>
+                                    <strong>Published Date:</strong>{" "}
+                                    {book.published_date ? new Date(book.published_date).toLocaleDateString() : "Unknown"}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    {otherBooks.length > 0 && (
+                        <Card className="container mt-4 md:mt-6">
+                            <CardHeader>
+                                <CardTitle>More by {book.author_name}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <ul className="space-y-2">
+                                    {otherBooks.map((otherBook) => (
+                                        <li key={otherBook.id}>
+                                            <button
+                                                onClick={() => router.push(`/book/${otherBook.id}`)}
+                                                className="text-blue-600 hover:underline bg-transparent border-none p-0 cursor-pointer"
+                                            >
+                                                {otherBook.title}
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </CardContent>
+                        </Card>
+                    )}
+                    <div className="mt-4">
+                        <Button
+                            onClick={() => {
+                                addItem({
+                                    id: book.id,
+                                    title: book.title,
+                                    price: book.price,
+                                });
+                            }}
+                            className="mr-4"
+                        >
+                            Add to Cart
+                        </Button>
+                        <button
+                          onClick={() => router.push("/home")}
+                          className="text-blue-600 hover:underline bg-transparent border-none p-0 cursor-pointer"
+                        >
+                          Continue Browsing
+                        </button>
                     </div>
-                </CardContent>
-            </Card>
-            {otherBooks.length > 0 && (
-                <Card className="container mt-6">
-                    <CardHeader>
-                        <CardTitle>More by {book.author_name}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ul className="space-y-2">
-                            {otherBooks.map((otherBook) => (
-                                <li key={otherBook.id}>
-                                    <button
-                                        onClick={() => router.push(`/book/${otherBook.id}`)}
-                                        className="text-blue-600 hover:underline bg-transparent border-none p-0 cursor-pointer"
-                                    >
-                                        {otherBook.title}
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
-                    </CardContent>
-                </Card>
+                </>
             )}
-            <div className="mt-4">
-                <Button
-                    onClick={() => {
-                        if (book) {
-                            addItem({
-                                id: book.id,
-                                title: book.title,
-                                price: book.price,
-                            });
-                        }
-                    }}
-                    className="mr-4"
-                >
-                    Add to Cart
-                </Button>
-                <button
-                  onClick={() => router.push("/home")}
-                  className="text-blue-600 hover:underline bg-transparent border-none p-0 cursor-pointer"
-                >
-                  Continue Browsing
-                </button>
-            </div>
         </div>
     );
 }

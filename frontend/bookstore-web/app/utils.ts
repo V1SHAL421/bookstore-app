@@ -134,6 +134,17 @@ export async function apiFetch(endpoint: string, options?: RequestInit): Promise
 }
 
 
+export class ApiError extends Error {
+  status: number;
+  payload: unknown;
+
+  constructor(status: number, payload: unknown, message = "API request failed") {
+    super(message);
+    this.status = status;
+    this.payload = payload;
+  }
+}
+
 export async function postJSON<TResponse, TBody>(url: string, body: TBody): Promise<TResponse> {
   const res = await apiFetch(url, {
     method: "POST",
@@ -144,7 +155,7 @@ export async function postJSON<TResponse, TBody>(url: string, body: TBody): Prom
   const payload = text ? JSON.parse(text) : null;
 
   if (!res.ok) {
-    throw new Error(`API request failed with status ${res.status} and payload ${payload}`);
+    throw new ApiError(res.status, payload, `API request failed with status ${res.status}`);
   }
 
   return payload as TResponse;
@@ -157,7 +168,7 @@ export async function getJSON<TResponse>(url: string): Promise<TResponse> {
   const payload = text ? JSON.parse(text) : null;
 
   if (!res.ok) {
-    throw new Error(`API request failed with status ${res.status} and payload ${payload}`);
+    throw new ApiError(res.status, payload, `API request failed with status ${res.status}`);
   }
 
   return payload as TResponse;

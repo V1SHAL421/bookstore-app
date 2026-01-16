@@ -11,8 +11,17 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 export const Button = ({ className, children, ...props }: ButtonProps) => {
   const [scope, animate] = useAnimate();
 
+  const safeAnimate = async (
+    selector: string,
+    keyframes: Record<string, unknown>,
+    options?: { duration?: number; delay?: number },
+  ) => {
+    if (!scope.current) return;
+    await animate(selector, keyframes, options);
+  };
+
   const animateLoading = async () => {
-    await animate(
+    await safeAnimate(
       ".loader",
       {
         width: "20px",
@@ -26,7 +35,7 @@ export const Button = ({ className, children, ...props }: ButtonProps) => {
   };
 
   const animateSuccess = async () => {
-    await animate(
+    await safeAnimate(
       ".loader",
       {
         width: "0px",
@@ -37,7 +46,7 @@ export const Button = ({ className, children, ...props }: ButtonProps) => {
         duration: 0.2,
       },
     );
-    await animate(
+    await safeAnimate(
       ".check",
       {
         width: "20px",
@@ -49,7 +58,7 @@ export const Button = ({ className, children, ...props }: ButtonProps) => {
       },
     );
 
-    await animate(
+    await safeAnimate(
       ".check",
       {
         width: "0px",
@@ -85,7 +94,7 @@ export const Button = ({ className, children, ...props }: ButtonProps) => {
       layoutId="button"
       ref={scope}
       className={cn(
-        "flex min-w-[120px] cursor-pointer items-center justify-center gap-2 rounded-full bg-blue-500 px-4 py-2 font-medium text-white ring-offset-2 transition duration-200 hover:ring-2 hover:ring-green-500 dark:ring-offset-black",
+        "flex min-w-[120px] cursor-pointer items-center justify-center gap-2 rounded-full bg-blue-500 px-4 py-2 font-medium text-white transition duration-200 hover:ring-0",
         className,
       )}
       {...buttonProps}
