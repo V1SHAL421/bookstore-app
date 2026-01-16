@@ -1,141 +1,68 @@
-# Full-Stack Technical Test
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app), paired with a FastAPI backend.
 
-Welcome! This is a **full-stack, frontend-leaning technical test** designed to assess your ability to:
-
-1. **Produce production-ready code** - Write clean, maintainable, well-tested code that follows best practices
-2. **Clearly articulate your work** - Document your decisions, approach, and implementation details
-3. **Make sound, product-focused, engineering decisions** - Choose appropriate solutions and justify your technical choices
-
-You'll be working with a pre-built FastAPI backend that powers a bookstore application. Your task will be to build a frontend that consumes this API while partially extending the backend with new features.
-
-## Before You Begin
-
-**📖 Read the [SYSTEM_OVERVIEW.md](./SYSTEM_OVERVIEW.md) first!**
-
-This document contains everything you need to know about the existing system.
-
-## Quick Start
+## Getting Started
 
 ### Prerequisites
+- Node.js 18+ and npm
+- Docker and Docker Compose (for the backend)
 
-- Docker and Docker Compose installed
-- [Just](https://github.com/casey/just) command runner (optional but recommended)
-
-### Setup
-
-1. **Copy environment file:**
+### Backend (FastAPI)
+1) Create a local env file:
+   - `backend/.env` (copy from `backend/.env.example`)
+   - Set `JWT_SECRET_KEY` to a random value for local dev.
+2) Start the backend stack:
    ```bash
-   cp .env.example .env
-   ```
-
-2. **Start the application:**
-   ```bash
+   cd backend
    just start
    ```
-
-3. **Verify setup:**
+3) Seed the database:
    ```bash
-   just test
+   just seed
    ```
+4) Verify the API is up:
+   - `http://localhost:8080/health`
+   - `http://localhost:8080/docs`
 
-   You should see all 60 tests passing.
-
-### Development Commands
+### Frontend (Next.js)
+From `frontend/bookstore-web`, run the dev server:
 
 ```bash
-just build          # Build Docker images
-just start          # Start all services and tail logs
-just stop           # Stop all services
-just shell          # Open bash shell in API container
-just test           # Run tests inside container
-just db-reset       # Reset database (drops all data)
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-## Test Deliverables
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You'll create a production-ready bookstore application with both backend security enhancements and a complete frontend experience. This involves implementing role-based access control for content management and building a customer-facing web application that allows users to discover and purchase books.
+If your API is not on the default URL, set `NEXT_PUBLIC_API_BASE` in your shell or in a local env file:
+```
+NEXT_PUBLIC_API_BASE=http://localhost:8080/api/v1
+```
 
-### Backend: Admin Access Control
+## Production Notes
+- Do not commit secrets. In production, inject `JWT_SECRET_KEY` and other secrets via your platform's secret manager.
+- Rotate secrets when deploying to prod and clear refresh tokens in Redis to invalidate old sessions.
+- Configure CORS allowlist via environment-specific settings.
 
-Currently, anyone can create, update, or delete books and authors. We need to restrict these operations to admin users only. Regular customers should still be able to browse books and authors, but only administrators should have permission to manage the catalog via the API.
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-**Note:** You only need to implement this in the backend. Admins should be able to manage books and authors through API endpoints, but you don't need to build a frontend interface for these admin operations.
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-### Frontend: Bookstore Application
+## Learn More
 
-Build a Next.js + React application that provides a complete bookstore experience:
+To learn more about Next.js, take a look at the following resources:
 
-**User Authentication**
-- Login page for existing users
-- Sign up page for new customers
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-**Book Browsing**
-- Homepage displaying all available books
-- Author pages showing all books by a specific author
-- Book detail pages with author information and pricing
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-**Shopping Experience**
-- Shopping cart functionality (managed in the frontend as session state)
-- Add books to cart and update quantities
-- Checkout process that creates order records in the database
-- View order history
+## Deploy on Vercel
 
-**Note:** You don't need to implement payment processing. The checkout process should simply create order records in the database with the cart contents.
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-### Bonus: Admin Book Management UI (Optional)
-
-If you have time and want to go further, build admin book management capabilities into your frontend application:
-- View, create, edit, and delete books
-- View, create, edit, and delete authors
-- Only accessible to users with admin privileges
-
-### Technical Commentary Document
-
-As you work through the test, create a `TECHNICAL_COMMENTARY.md` file with three sections:
-
-**1. Approach**
-- How you plan to tackle each deliverable
-- Key technical decisions and trade-offs you're considering
-- Example: Should a particular piece of functionality live in the frontend or backend? Why?
-- Reasoning behind your decisions considering: development pace, outcome quality, ease of implementation, scalability, maintainability
-
-**2. Implementation**
-- What you actually built and how
-- Any deviations from your original approach and why
-- Challenges encountered and how you solved them
-
-**3. Discussion**
-- Reflection on how the implementation went
-- What was particularly challenging or time-consuming
-- What you would do differently in the future
-- How you would extend or improve the application given more time
-
-**Tip:** Consider using AI note-taking tools or voice dictation software to capture your thoughts more quickly as you work. Speaking through your reasoning can often be faster and more natural than typing everything out.
-
-### Use of AI Tools
-
-We encourage you to use AI tools (like ChatGPT, Claude, Copilot, etc.) as productivity aids throughout this test. Modern software development involves leveraging these tools effectively, and we want to see how you use them. What matters is your ability to make sound technical decisions, understand the code you're writing, and articulate your reasoning - whether you wrote every character yourself or collaborated with AI to get there faster.
-
-## Evaluation
-
-We'll be assessing your submission holistically, looking at how well you've solved the problem and how clearly you've communicated your thinking.
-
-**What we care most about:** Does the application work? Can users actually accomplish the tasks they need to - browsing books, viewing authors, placing orders, and (for admins) managing the catalog? The user interface should be functional and intuitive. We're not evaluating visual design or aesthetics; a clean, unstyled interface that works well is perfectly fine. What matters is that users can navigate the application and complete their tasks effectively.
-
-**Your technical commentary is crucial.** We want to understand how you approached the problem, what trade-offs you considered, and why you made particular decisions. For example, where did you choose to implement certain logic - frontend or backend? Why? How did you balance speed of implementation with code quality? What would you do differently with more time? Your ability to articulate these decisions and reflect honestly on the work is just as important as the code itself.
-
-**Code quality and testing matter**, but in service of building something that works. We expect clean, maintainable code that follows best practices, and ideally, we'd like to see tests for the backend changes you make. Overall, we're most interested in seeing a working application with thoughtful decisions than perfect code that doesn't quite deliver on the requirements.
-
-Finally, we're evaluating your product thinking. Did you make pragmatic choices? Can you explain the trade-offs between different approaches? Do you understand the implications of your decisions on maintainability and scalability? The best submissions demonstrate not just technical skill, but an understanding of how to build software that solves real problems effectively.
-
-## Questions?
-
-Review the [SYSTEM_OVERVIEW.md](./SYSTEM_OVERVIEW.md) for detailed technical documentation about the existing system.
-
-If you have any questions about the test, please email ryan@meetdex.ai
-
----
-
-**A note on scope:** We recognize this is a substantial technical test. We suggest spending up to 4 hours on it, though you're welcome to spend more or less depending on your pace and approach. If you're concerned about the time commitment, please reach out to discuss - we'd rather have a conversation about adjusting the scope than have you feel overwhelmed by the task.
-
-Good luck! 🚀
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
