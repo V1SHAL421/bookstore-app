@@ -1,8 +1,30 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app), paired with a FastAPI backend.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+ and npm
+- Docker and Docker Compose (for the backend)
+
+### Backend (FastAPI)
+1) Create a local env file:
+   - `backend/.env` (copy from `backend/.env.example`)
+   - Set `JWT_SECRET_KEY` to a random value for local dev.
+2) Start the backend stack:
+   ```bash
+   cd backend
+   just start
+   ```
+3) Seed the database:
+   ```bash
+   just seed
+   ```
+4) Verify the API is up:
+   - `http://localhost:8080/health`
+   - `http://localhost:8080/docs`
+
+### Frontend (Next.js)
+From `frontend/bookstore-web`, run the dev server:
 
 ```bash
 npm run dev
@@ -15,6 +37,16 @@ bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+If your API is not on the default URL, set `NEXT_PUBLIC_API_BASE` in your shell or in a local env file:
+```
+NEXT_PUBLIC_API_BASE=http://localhost:8080/api/v1
+```
+
+## Production Notes
+- Do not commit secrets. In production, inject `JWT_SECRET_KEY` and other secrets via your platform's secret manager.
+- Rotate secrets when deploying to prod and clear refresh tokens in Redis to invalidate old sessions.
+- Configure CORS allowlist via environment-specific settings.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
